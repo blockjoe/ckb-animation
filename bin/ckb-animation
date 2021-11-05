@@ -1,0 +1,379 @@
+#!/bin/bash
+
+keys_file="${HOME}/.config/ckb-animation/keys"
+key_dir="${HOME}/.config/ckb-animation/chords"
+pid_file="/tmp/ckb-animation.pid"
+down="key press   "
+up="key release "
+
+true=1
+false=0
+
+super_down=$false
+ctrl_down=$false
+alt_down=$false
+shift_down=$false
+
+super_l_up="${up}133"
+super_l_down="${down}133"
+super_r_up="${up}134"
+super_r_down="${down}134"
+
+ctrl_l_up="${up}37"
+ctrl_l_down="${down}37"
+ctrl_r_up="${up}105"
+ctrl_r_down="${down}105"
+
+alt_l_up="${up}64"
+alt_l_down="${down}64"
+alt_r_up="${up}108"
+alt_r_down="${down}108"
+
+shift_l_up="${up}50"
+shift_l_down="${down}50"
+shift_r_up="${up}62"
+shift_r_down="${down}62"
+
+on="ffffffff"
+off="000000ff"
+
+ckb=/tmp/ckbpipe000
+
+keyboard_on(){
+	echo "rgb ${on}" > $ckb
+}
+
+keyboard_off(){
+	echo "rgb ${off}" > $ckb
+}
+
+key_on(){
+	echo "rgb ${1}:${on}" > $ckb
+}
+
+key_off(){
+	echo "rgb ${1}:${off}" > $ckb
+}
+
+handle_chord() {
+	case "$1" in
+		default)
+			keyboard_on
+			;;
+		*)
+			if [ -f "${key_dir}/${1}" ]; then
+				keyboard_off
+				while read key; do
+					key_on "$key"
+				done <"${key_dir}/${1}"
+			fi
+			;;
+	esac
+}
+
+main() {
+	keyboard_id=$(xinput list | grep "vKB" | cut -f 2 | cut -d"=" -f 2)
+	current_mode="default"
+
+	xinput test "$keyboard_id"  | while read event; do
+	 case "$event" in
+			"$super_l_up" | "$super_r_up")
+				super_down=$false
+				;;
+			"$super_l_down" | "$super_r_down")
+				super_down=$true
+				;;
+			"$ctrl_l_up" | "$ctrl_r_up")
+				ctrl_down=$false
+						;;
+			"$ctrl_l_down" | "$ctrl_r_down")
+				ctrl_down=$true
+				;;
+			"$alt_l_up" | "$alt_r_up")
+				alt_down=$false
+				;;
+			"$alt_l_down" | "$alt_r_down")
+				alt_down=$true
+				;;
+			"$shift_l_down" | "$shift_r_down")
+				shift_down=$true
+				;;
+			"$shift_l_up" | "$shift_r_up")
+				shift_down=$false
+				;;
+		esac
+
+		if [[ $ctrl_down == $true && $alt_down == $true && $shift_down == $true && $super_down == $true ]]; then
+						mode="default"
+		elif [[ $ctrl_down == $true && $alt_down == $true && $shift_down == $true ]]; then
+						mode="ctrl_alt_shift"
+		elif [[ $ctrl_down == $true && $alt_down == $true ]]; then
+			mode="ctrl_alt"
+		elif [[ $ctrl_down == $true && $shift_down == $true ]]; then
+			mode="ctrl_shift"
+		elif [[ $ctrl_down == $true && $super_down == $true ]]; then
+			mode="meta_ctrl"
+		elif [[ $alt_down == $true && $super_down == $true ]]; then
+			mode="meta_alt"
+		elif [[ $alt_down == $true && $shift_down == $true ]]; then
+			mode="alt_shift"
+		elif [[ $super_down == $true && $shift_down == $true ]]; then
+			mode="meta_shift"
+		elif [[ $ctrl_down == $true ]]; then
+			mode="ctrl"
+		elif [[ $alt_down == $true ]]; then
+			mode="alt"
+		#elif [[ $shift_down == $true ]]; then
+		#	mode="shift_"
+		elif [[ $super_down == $true ]]; then
+			mode="meta"
+		else
+			mode="default"
+		fi
+		if ! [ $mode = $current_mode ]; then
+			current_mode=$mode
+			handle_chord "$mode"
+		fi
+	done
+}
+
+start_ani() {
+	if [ -f "$pid_file" ]; then
+		ani_pid=$(cat "$pid_file")
+		if [ -z "$1" ]; then
+			echo "Animation appears to already be running with pid=${ani_pid}"
+		fi
+	    stop
+	fi
+	if [ -z "$1" ]; then
+		echo "Starting the ckb animation."
+	fi
+    	main &
+    	ani_pid=$!
+	echo "$ani_pid" > "$pid_file"
+}
+
+stop_ani() {
+	if [ -f "$pid_file" ]; then
+		ani_pid=$(cat "$pid_file")
+		pkill -P $ani_pid
+		rm "$pid_file"
+		if [ -z "$1" ]; then
+			echo "Animation stopped."
+		fi
+	elif [ -z "$1" ]; then
+		echo "The ckb animation does not appear to be running."
+	fi
+}
+
+restart_ani() {
+	stop_ani "$@"
+	start_ani "$@"
+}
+
+status_ani() {
+	if [ -f "$pid_file" ]; then
+		ani_pid=$(cat "$pid_file")
+		echo "Animation is running with pid=${ani_pid}."
+	else
+		echo "Animation is stopped."
+	fi
+}
+
+get_chord_file() {
+	while IFS='-' read -ra chord; do
+		for i in "${chord[@]}"; do
+			case "$i" in
+				alt|Alt)
+					has_alt=1
+					;;
+				ctrl|Ctrl|control|Control)
+					has_ctrl=1
+					;;
+				shift|Shift)
+					has_shift=1
+					;;
+				meta|Meta|super|Super|win|Win|windows|Windows)
+					has_meta=1
+					;;
+				*)
+					has_error=1
+					;;
+			esac
+		done
+	done <<< "$1"
+	if [ -n "$has_error" ]; then
+		echo "Unsupported chord: ${1}"
+		exit 1
+	elif [ -n "$has_ctrl" -a -n "$has_shift" -a -n "$has_alt" ]; then
+		echo "ctrl_alt_shift"
+	elif [ -n "$has_ctrl" -a -n "$has_alt" ]; then
+		echo "ctrl_alt"
+	elif [ -n "$has_ctrl" -a -n "$has_shift" ]; then
+		echo "ctrl_shift"
+	elif [ -n "$has_shift" -a -n "$has_alt" ]; then
+		echo "alt_shift"
+	elif [ -n "$has_meta" -a -n "$has_alt" ]; then
+		echo "meta_alt"
+	elif [ -n "$has_meta" -a -n "$has_shift" ]; then
+		echo "meta_shift"
+	elif [ -n "$has_meta" -a -n "$has_ctrl" ]; then
+		echo "meta_ctrl"
+	elif [ -n "$has_ctrl" ]; then
+		echo "ctrl"
+	elif [ -n "$has_alt" ]; then
+		echo "alt"
+	elif [ -n "$has_meta" ]; then
+		echo "meta"
+	elif [ -n "$has_shift" ]; then
+		echo "shift_"
+	else
+		echo "Unsupported, invalid, or empty chord ${1}"
+		exit 1
+	fi
+}
+
+key_search() {
+	awk -v FS='\t' -v OFS='\t' -v key="$1" '$2==key {print $2}' "$keys_file"
+}
+
+add_keys() {
+	key_file="$(get_chord_file "$1")"
+	if [ $? -ne 0 ]; then
+		echo "$key_file"
+		exit 1
+	fi
+	for key in "${@:2}"; do
+		found_key="$(key_search "$key")"
+		found_key="${found_key//$'\n'/}"
+		if [ "$found_key" != "$key" ]; then
+			echo "Invalid key ${key}"
+			echo "Try ckb-animation view keys"
+			exit 1
+		fi
+	done
+	echo "$(for key in "${@:2}"; do echo "$key"; done | cat - "${key_dir}/${key_file}")" | uniq > "${key_dir}/${key_file}.tmp"
+	echo >> "${key_dir}/${key_file}.tmp"
+	mv "${key_dir}/${key_file}.tmp" "${key_dir}/${key_file}"
+	restart_ani "quiet"
+}
+
+remove_keys() {
+	key_file="$(get_chord_file "$1")"
+	if [ $? -ne 0 ]; then
+		echo "$key_file"
+		exit 1
+	fi
+	for key in "${@:2}"; do
+		found_key="$(key_search "$key")"
+		found_key="${found_key//$'\n'/}"
+		if [ "$found_key" != "$key" ]; then
+			echo "Invalid key ${key}"
+			echo "Try ckb-animation view keys"
+			exit 1
+		fi
+	done
+	for key in "${@:2}"; do
+		sed -i "/$2/d" "${key_dir}/${key_file}"
+	done
+	restart_ani "quiet"
+}
+
+view_keys() {
+	case "$1" in
+		keys)
+			echo "Name        Key"
+			echo "---------------"
+			awk -v FS='\t' -v OFS='\t' '{printf "%-10s  %s\n", $2, $1}' "$keys_file"
+			;;
+		chord)
+			key_file="$(get_chord_file "$2")"
+			if [ $? -ne 0 ]; then
+				echo "$key_file"
+				exit 1
+			fi
+			echo "Keys for ${2}"
+			echo ""
+			cat "$key_dir/$key_file"
+			;;
+		all)
+			for kf in "$key_dir"/*; do
+				echo "Keys for ${kf##*/}"
+				echo ""
+				cat "$kf"
+			done
+			;;
+		*)
+			echo "Unsupported view argument ${1}"
+			exit 1
+			;;
+		esac
+}
+
+usage() {
+  echo "usage: ckb-animation [-h | --help] <command> [<args>]"
+	echo ""
+	echo "Managing the animation daemon:"
+	echo "  start                             start the animation"
+	echo "  restart                           restart the animation"
+ 	echo "  stop                              stop the animation"
+	echo "  status                            see the status of the animation"
+	echo ""
+	echo "Configuring the keys for the animation:"
+	echo ""
+	echo "  add <chord> <key>...              add keys to the given chord"
+	echo "  remove <chord> <key>...           remove keys from the given chord"
+	echo "  view {chord|keys|all} [<chord>]   view the keys for the given chord, all the chrods, key names"
+	echo ""
+	echo "Accepted chords are the following"
+	echo ""
+	echo "Single keys:"
+	echo "  ALT: {alt|Alt}"
+	echo "  SHIFT: {shift|Shift}"
+	echo "  CTRL: {ctrl|Ctrl|control|Control}"
+	echo "  SUPER: {meta|Meta|super|Super|win|Win|windows|Windows}"
+	echo ""
+	echo "Multiple key chords are the following combinations of the single key options seperated by a '-':"
+	echo "  CTRL-ALT"
+	echo "  CTRL-SHIFT"
+	echo "  SUPER-ALT"
+	echo "  SUPER-CTRL"
+	echo "  SUPER-SHIFT"
+	echo "  CTRL-ALT-SHIFT"
+}
+
+case "$1" in
+	start)
+		start_ani
+		;;
+	stop)
+		stop_ani
+		;;
+	restart)
+		restart_ani
+		;;
+	status)
+		status_ani
+		;;
+	add)
+		shift 1
+		add_keys "$@"
+		;;
+	remove)
+		shift 1
+		remove_keys "$@"
+		;;
+	view)
+		shift 1
+		view_keys "$@"
+		;;
+	-h|--help|help)
+		usage
+		;;
+	*)
+		usage
+		exit 1
+		;;
+
+esac
+

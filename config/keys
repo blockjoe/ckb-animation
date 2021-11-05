@@ -1,0 +1,142 @@
+MR	mr
+M1	m1
+M2	m2
+M3	m3
+Brightness	light
+Windows Lock	lock
+Mute	mute
+Volume Up	volup
+Volume down	voldn
+G1	g1
+G2	g2
+G3	g3
+Esc	esc
+F1	f1
+F2	f2
+F3	f3
+F4	f4
+F5	f5
+F6	f6
+F7	f7
+F8	f8
+F9	f9
+F10	f10
+F11	f11
+F12	f12
+Print Screen|SysRq	prtscn
+Scroll Lock	scroll
+Pause|Break	pause
+Stop	stop
+Previous	prev
+Play/Pause	play
+Next	next
+G4	g4
+G5	g5
+G6	g6
+`	grave
+1	1
+2	2
+3	3
+4	4
+5	5
+6	6
+7	7
+8	8
+9	9
+0	0
+-	minus
+=	equal
+¥	yen
+Backspace	bspace
+Insert	ins
+Home	home
+Page Up	pgup
+Num Lock	numlock
+NumPad /	numslash
+NumPad *	numstar
+NumPad -	numminus
+G7	g7
+G8	g8
+G9	g9
+Tab	tab
+Q	q
+W	w
+E	e
+R	r
+T	t
+Y	y
+U	u
+I	i
+O	o
+P	p
+[	lbrace
+]	rbrace
+\\	bslash
+Enter	enter
+Delete	del
+End	end
+Page Down	pgdn
+NumPad 7	num7
+NumPad 8	num8
+NumPad 9	num9
+NumPad +	numplus
+G10	g10
+G11	g11
+G12	g12
+Caps Lock	caps
+A	a
+S	s
+D	d
+F	f
+G	g
+H	h
+J	j
+K	k
+L	l
+;	colon
+'	quote
+#	hash
+NumPad 4	num4
+NumPad 5	num5
+NumPad 6	num6
+G13	g13
+G14	g14
+G15	g15
+Left Shift	lshift
+\\	bslash_iso
+Z	z
+X	x
+C	c
+V	v
+B	b
+N	n
+M	m
+,	comma
+.	dot
+/	slash
+_	ro
+Right Shift	rshift
+Up	up
+NumPad 1	num1
+NumPad 2	num2
+NumPad 3	num3
+NumPad Enter	numenter
+G16	g16
+G17	g17
+G18	g18
+Left Ctrl	lctrl
+Left Windows	lwin
+Left Alt	lalt
+無変換	muhenkan
+Space	space
+変換	henkan
+ひらがな カタカナ ローマ字	katahira
+Right Alt	ralt
+Right Windows	rwin
+Menu	rmenu
+Right Ctrl	rctrl
+Left	left
+Down	down
+Right	right
+NumPad 0	num0
+NumPad .	numdot
