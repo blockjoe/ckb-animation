@@ -104,9 +104,15 @@ main() {
 		esac
 
 		if [[ $ctrl_down == $true && $alt_down == $true && $shift_down == $true && $super_down == $true ]]; then
-						mode="default"
+			mode="default"
+		elif [[ $ctrl_down == $true && $super_down == $true && $shift_down == $true ]]; then
+			mode="default"
+		elif [[ $alt_down == $true && $super_down == $true && $shift_down == $true ]]; then
+			mode="default"
+		elif [[ $alt_down == $true && $super_down == $true && $ctrl_down == $true ]]; then
+			mode="default"
 		elif [[ $ctrl_down == $true && $alt_down == $true && $shift_down == $true ]]; then
-						mode="ctrl_alt_shift"
+			mode="ctrl_alt_shift"
 		elif [[ $ctrl_down == $true && $alt_down == $true ]]; then
 			mode="ctrl_alt"
 		elif [[ $ctrl_down == $true && $shift_down == $true ]]; then
@@ -123,8 +129,8 @@ main() {
 			mode="ctrl"
 		elif [[ $alt_down == $true ]]; then
 			mode="alt"
-		#elif [[ $shift_down == $true ]]; then
-		#	mode="shift_"
+		elif [[ $shift_down == $true ]]; then
+			mode="default"
 		elif [[ $super_down == $true ]]; then
 			mode="meta"
 		else
@@ -301,6 +307,7 @@ view_keys() {
 				echo "Keys for ${kf##*/}"
 				echo ""
 				cat "$kf"
+				echo "--------------------"
 			done
 			;;
 		*)

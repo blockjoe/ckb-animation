@@ -1,4 +1,0 @@
-#!/bin/bash
-
-sleep 10
-/home/joe/.local/bin/ckb-animation restart

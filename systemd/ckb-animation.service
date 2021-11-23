@@ -1,0 +1,14 @@
+[Unit]
+Description=Launch ckb-animation when a compatible keyboard is plugged in.
+BindsTo=dev-ckb_keyboard.device
+After=dev-ckb_keyoard.device
+Requisite=dev-ckb_keyboard.device
+StopWhenUnneeded=true
+
+[Service]
+Type=forking
+ExecStart=/home/joe/.local/bin/ckb-animation start
+ExecStop=/home/joe/.local/bin/ckb-animation stop
+
+[Install]
+WantedBy=dev-ckb_keyboard.device
